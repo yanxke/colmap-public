@@ -30,21 +30,25 @@
 import argparse
 import numpy as np
 import open3d
+import open3d.visualization
 
 from read_write_model import read_model, write_model, qvec2rotmat, rotmat2qvec
 
 
 class Model:
     def __init__(self):
-        self.cameras = []
-        self.images = []
-        self.points3D = []
+        self.cameras = {}
+        self.images = {}
+        self.points3D = {}
         self.__vis = None
 
     def read_model(self, path, ext=""):
         self.cameras, self.images, self.points3D = read_model(path, ext)
 
     def add_points(self, min_track_len=3, remove_statistical_outlier=True):
+        if self.__vis is None:
+            raise Exception("Window not created")
+
         pcd = open3d.geometry.PointCloud()
 
         xyz = []
@@ -69,7 +73,10 @@ class Model:
         self.__vis.poll_events()
         self.__vis.update_renderer()
 
-    def add_cameras(self, scale=1):
+    def add_cameras(self, scale=1.):
+        if self.__vis is None:
+            raise Exception("Window not created")
+
         frames = []
         for img in self.images.values():
             # rotation
@@ -117,6 +124,9 @@ class Model:
         self.__vis.create_window()
 
     def show(self):
+        if self.__vis is None:
+            raise Exception("Window not created")
+
         self.__vis.poll_events()
         self.__vis.update_renderer()
         self.__vis.run()
@@ -124,7 +134,7 @@ class Model:
 
 
 def draw_camera(K, R, t, w, h,
-                scale=1, color=[0.8, 0.2, 0.8]):
+                scale=1., color=[0.8, 0.2, 0.8]):
     """Create axis, plane and pyramed geometries in Open3D format.
     :param K: calibration matrix (camera intrinsics)
     :param R: rotation matrix
@@ -145,7 +155,8 @@ def draw_camera(K, R, t, w, h,
     T = np.vstack((T, (0, 0, 0, 1)))
 
     # axis
-    axis = open3d.geometry.TriangleMesh.create_coordinate_frame(size=0.5 * scale)
+    axis = open3d.geometry.TriangleMesh.create_coordinate_frame(
+        size=0.5 * scale)
     axis.transform(T)
 
     # points in pixel
@@ -187,8 +198,10 @@ def draw_camera(K, R, t, w, h,
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Visualize COLMAP binary and text models")
-    parser.add_argument("--input_model", required=True, help="path to input model folder")
+    parser = argparse.ArgumentParser(
+        description="Visualize COLMAP binary and text models")
+    parser.add_argument("--input_model", required=True,
+                        help="path to input model folder")
     parser.add_argument("--input_format", choices=[".bin", ".txt"],
                         help="input model format", default="")
     args = parser.parse_args()
@@ -208,8 +221,11 @@ def main():
 
     # display using Open3D visualization tools
     model.create_window()
+    print("Adding points...")
     model.add_points()
+    print("Adding cameras...")
     model.add_cameras(scale=0.25)
+    print("Showing...")
     model.show()
 
 
