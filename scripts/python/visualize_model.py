@@ -72,6 +72,7 @@ class Model:
         self.__vis.add_geometry(pcd)
         self.__vis.poll_events()
         self.__vis.update_renderer()
+        self.pcd = pcd
 
     def add_cameras(self, scale=1.):
         if self.__vis is None:
