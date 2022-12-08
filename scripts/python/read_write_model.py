@@ -35,6 +35,8 @@ import numpy as np
 import struct
 import argparse
 
+from typing import Any, Dict, IO, Tuple
+
 
 CameraModel = collections.namedtuple(
     "CameraModel", ["model_id", "model_name", "num_params"])
@@ -70,7 +72,7 @@ CAMERA_MODEL_NAMES = dict([(camera_model.model_name, camera_model)
                            for camera_model in CAMERA_MODELS])
 
 
-def read_next_bytes(fid, num_bytes, format_char_sequence, endian_character="<"):
+def read_next_bytes(fid: IO[Any], num_bytes: int, format_char_sequence, endian_character="<"):
     """Read and unpack the next bytes from a binary file.
     :param fid:
     :param num_bytes: Sum of combination of {2, 4, 8}, e.g. 2, 6, 16, 30, etc.
@@ -82,7 +84,7 @@ def read_next_bytes(fid, num_bytes, format_char_sequence, endian_character="<"):
     return struct.unpack(endian_character + format_char_sequence, data)
 
 
-def write_next_bytes(fid, data, format_char_sequence, endian_character="<"):
+def write_next_bytes(fid: IO[Any], data, format_char_sequence, endian_character="<"):
     """pack and write to a binary file.
     :param fid:
     :param data: data to send, if multiple elements are sent at the same time,
@@ -98,13 +100,13 @@ def write_next_bytes(fid, data, format_char_sequence, endian_character="<"):
     fid.write(bytes)
 
 
-def read_cameras_text(path):
+def read_cameras_text(path) -> Dict[int, Camera]:
     """
     see: src/base/reconstruction.cc
         void Reconstruction::WriteCamerasText(const std::string& path)
         void Reconstruction::ReadCamerasText(const std::string& path)
     """
-    cameras = {}
+    cameras: Dict[int, Camera] = {}
     with open(path, "r") as fid:
         while True:
             line = fid.readline()
@@ -124,13 +126,13 @@ def read_cameras_text(path):
     return cameras
 
 
-def read_cameras_binary(path_to_model_file):
+def read_cameras_binary(path_to_model_file) -> Dict[int, Camera]:
     """
     see: src/base/reconstruction.cc
         void Reconstruction::WriteCamerasBinary(const std::string& path)
         void Reconstruction::ReadCamerasBinary(const std::string& path)
     """
-    cameras = {}
+    cameras: Dict[int, Camera] = {}
     with open(path_to_model_file, "rb") as fid:
         num_cameras = read_next_bytes(fid, 8, "Q")[0]
         for _ in range(num_cameras):
@@ -153,7 +155,7 @@ def read_cameras_binary(path_to_model_file):
     return cameras
 
 
-def write_cameras_text(cameras, path):
+def write_cameras_text(cameras: Dict[int, Camera], path):
     """
     see: src/base/reconstruction.cc
         void Reconstruction::WriteCamerasText(const std::string& path)
@@ -170,7 +172,7 @@ def write_cameras_text(cameras, path):
             fid.write(line + "\n")
 
 
-def write_cameras_binary(cameras, path_to_model_file):
+def write_cameras_binary(cameras: Dict[int, Camera], path_to_model_file):
     """
     see: src/base/reconstruction.cc
         void Reconstruction::WriteCamerasBinary(const std::string& path)
@@ -190,13 +192,13 @@ def write_cameras_binary(cameras, path_to_model_file):
     return cameras
 
 
-def read_images_text(path):
+def read_images_text(path) -> Dict[int, Image]:
     """
     see: src/base/reconstruction.cc
         void Reconstruction::ReadImagesText(const std::string& path)
         void Reconstruction::WriteImagesText(const std::string& path)
     """
-    images = {}
+    images: Dict[int, Image] = {}
     with open(path, "r") as fid:
         while True:
             line = fid.readline()
@@ -221,13 +223,13 @@ def read_images_text(path):
     return images
 
 
-def read_images_binary(path_to_model_file):
+def read_images_binary(path_to_model_file) -> Dict[int, Image]:
     """
     see: src/base/reconstruction.cc
         void Reconstruction::ReadImagesBinary(const std::string& path)
         void Reconstruction::WriteImagesBinary(const std::string& path)
     """
-    images = {}
+    images: Dict[int, Image] = {}
     with open(path_to_model_file, "rb") as fid:
         num_reg_images = read_next_bytes(fid, 8, "Q")[0]
         for _ in range(num_reg_images):
@@ -256,7 +258,7 @@ def read_images_binary(path_to_model_file):
     return images
 
 
-def write_images_text(images, path):
+def write_images_text(images: Dict[int, Image], path):
     """
     see: src/base/reconstruction.cc
         void Reconstruction::ReadImagesText(const std::string& path)
@@ -284,7 +286,7 @@ def write_images_text(images, path):
             fid.write(" ".join(points_strings) + "\n")
 
 
-def write_images_binary(images, path_to_model_file):
+def write_images_binary(images: Dict[int, Image], path_to_model_file):
     """
     see: src/base/reconstruction.cc
         void Reconstruction::ReadImagesBinary(const std::string& path)
@@ -305,13 +307,13 @@ def write_images_binary(images, path_to_model_file):
                 write_next_bytes(fid, [*xy, p3d_id], "ddq")
 
 
-def read_points3D_text(path):
+def read_points3D_text(path) -> Dict[int, Point3D]:
     """
     see: src/base/reconstruction.cc
         void Reconstruction::ReadPoints3DText(const std::string& path)
         void Reconstruction::WritePoints3DText(const std::string& path)
     """
-    points3D = {}
+    points3D: Dict[int, Point3D] = {}
     with open(path, "r") as fid:
         while True:
             line = fid.readline()
@@ -332,13 +334,13 @@ def read_points3D_text(path):
     return points3D
 
 
-def read_points3D_binary(path_to_model_file):
+def read_points3D_binary(path_to_model_file) -> Dict[int, Point3D]:
     """
     see: src/base/reconstruction.cc
         void Reconstruction::ReadPoints3DBinary(const std::string& path)
         void Reconstruction::WritePoints3DBinary(const std::string& path)
     """
-    points3D = {}
+    points3D: Dict[int, Point3D] = {}
     with open(path_to_model_file, "rb") as fid:
         num_points = read_next_bytes(fid, 8, "Q")[0]
         for _ in range(num_points):
@@ -362,7 +364,7 @@ def read_points3D_binary(path_to_model_file):
     return points3D
 
 
-def write_points3D_text(points3D, path):
+def write_points3D_text(points3D: Dict[int, Point3D], path):
     """
     see: src/base/reconstruction.cc
         void Reconstruction::ReadPoints3DText(const std::string& path)
@@ -387,7 +389,7 @@ def write_points3D_text(points3D, path):
             fid.write(" ".join(track_strings) + "\n")
 
 
-def write_points3D_binary(points3D, path_to_model_file):
+def write_points3D_binary(points3D: Dict[int, Point3D], path_to_model_file):
     """
     see: src/base/reconstruction.cc
         void Reconstruction::ReadPoints3DBinary(const std::string& path)
@@ -416,7 +418,7 @@ def detect_model_format(path, ext):
     return False
 
 
-def read_model(path, ext=""):
+def read_model(path, ext="") -> Tuple[Dict[int, Camera], Dict[int, Image], Dict[int, Point3D]]:
     # try to detect the extension automatically
     if ext == "":
         if detect_model_format(path, ".bin"):
@@ -437,7 +439,7 @@ def read_model(path, ext=""):
     return cameras, images, points3D
 
 
-def write_model(cameras, images, points3D, path, ext=".bin"):
+def write_model(cameras: Dict[int, Camera], images: Dict[int, Image], points3D: Dict[int, Point3D], path, ext=".bin"):
     if ext == ".txt":
         write_cameras_text(cameras, os.path.join(path, "cameras" + ext))
         write_images_text(images, os.path.join(path, "images" + ext))
